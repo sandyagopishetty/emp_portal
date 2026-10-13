@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Employee & Department</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f3f4f6; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      height: 100vh;
+      padding: 12px;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 16px;
+      overflow: auto;
+    }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    label { display: block; margin-bottom: 4px; font-size: 14px; }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #9ca3af;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 18px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 8px;
+      text-align: left;
+      font-size: 14px;
+    }
+    th { background: #e5e7eb; }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <!-- 1: Employee form -->
+    <div class="panel">
+      <h2>Employee Form</h2>
+      <form id="employeeForm">
+        <label>Employee ID</label>
+        <input name="employee_id" required />
+        <label>Name</label>
+        <input name="name" required />
+        <label>Salary</label>
+        <input name="salary" type="number" step="0.01" required />
+        <label>Department</label>
+        <input name="department" required />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <!-- 2: Employee table -->
+    <div class="panel">
+      <h2>Employee Table</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Salary</th>
+            <th>Department</th>
+          </tr>
+        </thead>
+        <tbody id="employeeBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 3: Department form -->
+    <div class="panel">
+      <h2>Department Form</h2>
+      <form id="departmentForm">
+        <label>Department ID</label>
+        <input name="department_id" required />
+        <label>Department Name</label>
+        <input name="department_name" required />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <!-- 4: Department table -->
+    <div class="panel">
+      <h2>Department Table</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Department ID</th>
+            <th>Department Name</th>
+          </tr>
+        </thead>
+        <tbody id="departmentBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    function escapeHtml(value) {
+      const div = document.createElement("div");
+      div.textContent = value;
+      return div.innerHTML;
+    }
+
+    async function loadEmployees() {
+      const res = await fetch("/employees");
+      const data = await res.json();
+      document.getElementById("employeeBody").innerHTML = data
+        .map(e => `<tr>
+          <td>${escapeHtml(e.employee_id)}</td>
+          <td>${escapeHtml(e.name)}</td>
+          <td>${escapeHtml(String(e.salary))}</td>
+          <td>${escapeHtml(e.department)}</td>
+        </tr>`)
+        .join("");
+    }
+
+    async function loadDepartments() {
+      const res = await fetch("/departments");
+      const data = await res.json();
+      document.getElementById("departmentBody").innerHTML = data
+        .map(d => `<tr>
+          <td>${escapeHtml(d.department_id)}</td>
+          <td>${escapeHtml(d.department_name)}</td>
+        </tr>`)
+        .join("");
+    }
+
+    document.getElementById("employeeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = Object.fromEntries(new FormData(form));
+      payload.salary = parseFloat(payload.salary);
+      await fetch("/employees", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      form.reset();
+      loadEmployees();
+    });
+
+    document.getElementById("departmentForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = Object.fromEntries(new FormData(form));
+      await fetch("/departments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      form.reset();
+      loadDepartments();
+    });
+
+    loadEmployees();
+    loadDepartments();
+  </script>
+</body>
+</html>
