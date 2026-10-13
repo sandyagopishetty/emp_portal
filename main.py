@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
@@ -36,8 +36,13 @@ def get_employee():
 
 @app.post("/employees")
 def add_employee(emp: Employee):
-    employees.append(emp.model_dump())
-    return emp
+    for dept in departments:
+        if dept['department_id'] == emp.department:
+            employees.append(emp.model_dump())
+            return emp
+    else:
+        raise HTTPException(status_code=400, detail="Department is not available")
+
 @app.get("/departments")
 def get_department():
     return departments

@@ -152,11 +152,17 @@
       const form = e.target;
       const payload = Object.fromEntries(new FormData(form));
       payload.salary = parseFloat(payload.salary);
-      await fetch("/employees", {
+      const res = await fetch("/employees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
+      if (!res.ok) {
+        const err = await res.json();
+        // 400 gives a string; 422 gives a list, so handle both
+        alert(typeof err.detail === "string" ? err.detail : "Please check the form values");
+        return;   // keep the form filled so the user can fix it
+      }
       form.reset();
       loadEmployees();
     });
